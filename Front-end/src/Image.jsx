@@ -3,7 +3,7 @@ import axios from 'axios';
 
 
 
-const apiKey = "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";
+const apiKey = "";
 
 function Image() {
 

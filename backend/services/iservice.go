@@ -11,7 +11,7 @@ import (
 
 var apiURLI string = "https://api.openai.com/v1/images/generations"
 
-var apiKeyI string = "Your api key"
+var apiKeyI string = ""
 
 
 func GenerateImage(w http.ResponseWriter, req *http.Request) {

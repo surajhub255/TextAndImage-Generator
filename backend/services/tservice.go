@@ -12,7 +12,7 @@ import (
 )
 var apiURL string = "https://api.openai.com/v1/chat/completions"
 
-var apiKey string = "Your api  key"
+var apiKey string = ""
 
 
 
