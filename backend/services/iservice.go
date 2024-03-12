@@ -1,24 +1,28 @@
 package services
 
 import (
+	"back/models"
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
-	"back/models"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 var apiURLI string = "https://api.openai.com/v1/images/generations"
 
-var apiKeyI string = ""
+func GenerateImage(c *gin.Context) {
 
+	godotenv.Load()
 
-func GenerateImage(w http.ResponseWriter, req *http.Request) {
+	apiKeyI := os.Getenv("API_KEY")
+	text := c.Query("text")
 
-	text := req.URL.Query().Get("text")
-
-	body := models.RequestI{Prompt: text, N: 1, ResponseFormat: "url", Size:models.Low}
+	body := models.RequestI{Prompt: text, N: 1, ResponseFormat: "url", Size: models.Low, Model: "dall-e-2"}
 
 	bodyBytes, _ := json.Marshal(body)
 
@@ -28,25 +32,26 @@ func GenerateImage(w http.ResponseWriter, req *http.Request) {
 	client := &http.Client{}
 	res, err := client.Do(r)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error sending request to OpenAI API"})
 		return
 	}
 
 	defer res.Body.Close()
 
-	responseBody, err := ioutil.ReadAll(res.Body)
+	responseBody, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error reading response body"})
 		return
 	}
 
-	output :=models.ResponseI{}
+	output := models.ResponseI{}
 
 	err = json.Unmarshal(responseBody, &output)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error decoding OpenAI API response"})
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(output.Data[0].Url)
+	c.JSON(http.StatusOK, gin.H{"imageSrc": output.Data[0].Url})
 }

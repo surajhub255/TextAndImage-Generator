@@ -3,27 +3,34 @@ package main
 import (
 	"back/services"
 	"fmt"
-	"net/http"
 
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Header("Access-Control-Allow-Methods", "POST,HEAD,PATCH, OPTIONS, GET, PUT")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
+}
 func main() {
-	router := mux.NewRouter()
+	router := gin.Default()
+	router.Use(CORSMiddleware())
 
-	router.HandleFunc("/generate", services.GenerateImage).Methods("GET")
-	router.HandleFunc("/generate-text", services.HandleGenerateText).Methods("POST")
-
-	http.Handle("/", router)
+	router.POST("/generate", services.GenerateImage)
+	router.POST("/generate-text", services.HandleGenerateText)
 
 	port := 8080
 	fmt.Printf("Server running on :%d...\n", port)
-	http.ListenAndServe(fmt.Sprintf(":%d", port),
-		handlers.CORS(
-			handlers.AllowedOrigins([]string{"*"}),
-			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTION"}),
-			handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}),
-		)(router))
-
+	router.Run(fmt.Sprintf(":%d", port))
 }

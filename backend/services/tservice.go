@@ -1,27 +1,31 @@
 package services
 
 import (
+	"back/models"
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
 	"errors"
-	"back/models"
-	
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
+
 var apiURL string = "https://api.openai.com/v1/chat/completions"
 
-var apiKey string = ""
-
-
-
 func GenerateText(message string) (string, error) {
+
+	godotenv.Load()
+
+	apiKey := os.Getenv("API_KEY")
 	messages := make([]models.Message, 0)
 
 	messages = append(messages, models.Message{Role: "user", Content: message})
 
-	body := models.Request{Model: "gpt-3.5-turbo", Messages: messages}
+	body := models.Request{Model: "gpt-4", Messages: messages}
 
 	bodyBytes, _ := json.Marshal(body)
 
@@ -36,7 +40,7 @@ func GenerateText(message string) (string, error) {
 
 	defer res.Body.Close()
 
-	responseBody, err := ioutil.ReadAll(res.Body)
+	responseBody, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
@@ -57,21 +61,19 @@ func GenerateText(message string) (string, error) {
 	return output.Choices[0].Message.Content, nil
 }
 
-func HandleGenerateText(w http.ResponseWriter, r *http.Request) {
+func HandleGenerateText(c *gin.Context) {
 	var requestData map[string]string
-	err := json.NewDecoder(r.Body).Decode(&requestData)
-	if err != nil {
-		http.Error(w, "Invalid request data", http.StatusBadRequest)
+
+	if err := c.BindJSON(&requestData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
 
 	output, err := GenerateText(requestData["message"])
 	if err != nil {
-		http.Error(w, "Error generating text", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating text"})
 		return
 	}
 
-	response := map[string]string{"result": output}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	c.JSON(http.StatusOK, gin.H{"result": output})
 }

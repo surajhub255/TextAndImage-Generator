@@ -10,6 +10,7 @@ type RequestI struct {
 	N              int    `json:"n"`
 	Size           string `json:"size"`
 	ResponseFormat string `json:"response_format"`
+	Model          string `json:"model"`
 }
 
 const (

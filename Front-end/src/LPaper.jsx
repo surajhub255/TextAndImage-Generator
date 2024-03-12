@@ -15,7 +15,7 @@ export default function LPaper() {
         flexWrap: 'wrap',
         '& > :not(style)': {
           m: 1,
-          width: 360,
+          width: 355,
           height: 200,
         },
       }}

@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 
+const Loader = () => <div className="loader">Loading...</div>;
+
 const Text = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [generatedText, setGeneratedText] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleGenerateText = async () => {
+    setLoading(true);
+
     try {
       const response = await fetch('http://localhost:8080/generate-text', {
         method: 'POST',
@@ -19,13 +24,15 @@ const Text = () => {
       setGeneratedText(data.result);
     } catch (error) {
       console.error('Error generating text:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const clearInput = () => {
     setInputMessage('');
     setGeneratedText('');
-    setCopySuccess(false); // Reset copy success state
+    setCopySuccess(false);
   };
 
   const handleCopyText = () => {
@@ -35,11 +42,11 @@ const Text = () => {
     textArea.select();
     document.execCommand('copy');
     document.body.removeChild(textArea);
-    
-    setCopySuccess(true); 
+
+    setCopySuccess(true);
     setTimeout(() => {
       setCopySuccess(false);
-    }, 2000); 
+    }, 2000);
   };
 
   return (
@@ -59,6 +66,7 @@ const Text = () => {
           <div className='tbutb'>
             <button type='reset' onClick={clearInput} className='tbut1'><b>Clear</b></button>
             <button className='tbut2' onClick={handleGenerateText}><b>Generate Text</b></button>
+            {loading && <Loader />}
           </div>
         </div>
         <div className='tgb'>
